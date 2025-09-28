@@ -1,0 +1,77 @@
+from keras.datasets import mnist
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+import numpy as np
+
+# --- 1. Cargar datos ---
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+X_train_pre = X_train.reshape(-1, 28*28) / 255.0
+X_test_pre = X_test.reshape(-1, 28*28) / 255.0
+
+
+pca = PCA(n_components=2)
+X_train_2D = pca.fit_transform(X_train_pre)
+X_test_2D = pca.transform(X_test_pre)
+
+
+plt.figure(figsize=(10, 8))
+for digit in range(10):
+    plt.scatter(X_train_2D[y_train == digit, 0],
+                X_train_2D[y_train == digit, 1],
+                label=str(digit), s=10, alpha=0.7)
+plt.title("Datos MNIST antes de clasificar")
+plt.legend()
+plt.show()
+
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train_pre, y_train)
+
+
+y_pred = knn.predict(X_test_pre)
+
+
+print("\nReporte de clasificación:")
+print(classification_report(y_test, y_pred))
+print("Precisión total:", accuracy_score(y_test, y_pred))
+
+matriz = confusion_matrix(y_test, y_pred)
+accuracy = accuracy_score(y_test, y_pred)
+
+plt.figure(figsize=(8, 6))
+plt.imshow(matriz, cmap='Blues')
+plt.title(f"Matriz de Confusión (Accuracy= {accuracy:.4f})")
+plt.xlabel("Predicción")
+plt.ylabel("Etiqueta real")
+plt.colorbar()
+plt.xticks(np.arange(10))
+plt.yticks(np.arange(10))
+for i in range(matriz.shape[0]):
+    for j in range(matriz.shape[1]):
+        plt.text(j, i, matriz[i, j], ha='center', va='center', color="lightblue", fontsize=6)
+plt.show()
+
+
+h = 0.05
+x_min, x_max = X_test_2D[:, 0].min() - 1, X_test_2D[:, 0].max() + 1
+y_min, y_max = X_test_2D[:, 1].min() - 1, X_test_2D[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                     np.arange(y_min, y_max, h))
+
+
+Z = knn.predict(pca.inverse_transform(np.c_[xx.ravel(), yy.ravel()]))
+Z = Z.reshape(xx.shape)
+
+
+plt.figure(figsize=(10, 8))
+plt.contourf(xx, yy, Z, alpha=0.2, cmap=plt.cm.tab10)
+for digit in range(10):
+    plt.scatter(X_test_2D[y_test == digit, 0],
+                X_test_2D[y_test == digit, 1],
+                label=str(digit), s=10, alpha=0.7)
+plt.title("Fronteras de decisión ")
+plt.legend()
+plt.show()
