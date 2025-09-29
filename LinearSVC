@@ -1,41 +1,40 @@
 from keras.datasets import mnist
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import numpy as np
 
-#Cargar datos
+# --- 1. Cargar datos ---
 (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-#Flatten y Normalizacion
+# --- 2. Flatten + Normalización ---
 X_train_pre = X_train.reshape(-1, 28*28) / 255.0
 X_test_pre = X_test.reshape(-1, 28*28) / 255.0
 
-# PCA para poder mostrar la grafica
+# --- 3. PCA para visualización 2D ---
 pca = PCA(n_components=2)
 X_train_2D = pca.fit_transform(X_train_pre)
 X_test_2D = pca.transform(X_test_pre)
 
-
-#En esta parte llamamos al clasificador
-svc= SVC(kernel='rbf')
+# --- 4. Clasificador Linear SVC ---
+svc = LinearSVC(max_iter=5000, random_state=42)  # max_iter alto para converger
 svc.fit(X_train_pre, y_train)
 
-# Hacemos las predicciones
+# --- 5. Predicción ---
 y_pred = svc.predict(X_test_pre)
 
-# Metricas
+# --- 6. Métricas ---
 print("\nReporte de clasificación:")
 print(classification_report(y_test, y_pred))
 accuracy = accuracy_score(y_test, y_pred)
 print("Precisión total:", accuracy)
 
-# Matriz
+# --- 7. Matriz de confusión ---
 matriz = confusion_matrix(y_test, y_pred)
 plt.figure(figsize=(8, 6))
 plt.imshow(matriz, cmap='Blues')
-plt.title(f"Matriz de Confusión)")
+plt.title(f"Matriz de Confusión (Accuracy= {accuracy:.4f})")
 plt.xlabel("Predicción")
 plt.ylabel("Etiqueta real")
 plt.colorbar()
@@ -46,14 +45,13 @@ for i in range(matriz.shape[0]):
         plt.text(j, i, matriz[i, j], ha='center', va='center', color="lightblue", fontsize=6)
 plt.show()
 
-# Fronteras con 2D
+# --- 8. Fronteras de decisión en 2D ---
 h = 0.05
 x_min, x_max = X_test_2D[:, 0].min() - 1, X_test_2D[:, 0].max() + 1
 y_min, y_max = X_test_2D[:, 1].min() - 1, X_test_2D[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                      np.arange(y_min, y_max, h))
 
-# Para las fronteras usamos datos proyectados 2D y clasificamos directo con GaussianNB
 Z = svc.predict(pca.inverse_transform(np.c_[xx.ravel(), yy.ravel()]))
 Z = Z.reshape(xx.shape)
 
@@ -61,8 +59,4 @@ plt.figure(figsize=(10, 8))
 plt.contourf(xx, yy, Z, alpha=0.2, cmap=plt.cm.tab10)
 for digit in range(10):
     plt.scatter(X_test_2D[y_test == digit, 0],
-                X_test_2D[y_test == digit, 1],
-                label=str(digit), s=10, alpha=0.7)
-plt.title("Fronteras de decisión con SVC")
-plt.legend()
-plt.show()
+                X_test_2D[y_tes_]()
