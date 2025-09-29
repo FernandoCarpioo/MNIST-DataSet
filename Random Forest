@@ -1,0 +1,67 @@
+from keras.datasets import mnist
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+import numpy as np
+
+# --- 1. Cargar datos ---
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+# --- 2. Flatten + Normalización ---
+X_train_pre = X_train.reshape(-1, 28*28) / 255.0
+X_test_pre = X_test.reshape(-1, 28*28) / 255.0
+
+# --- 3. Reducir a 2D para visualización con PCA ---
+pca = PCA(n_components=2)
+X_train_2D = pca.fit_transform(X_train_pre)
+X_test_2D = pca.transform(X_test_pre)
+
+# --- 5. Clasificador Random Forest ---
+rf = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42, n_jobs=-1)
+rf.fit(X_train_pre, y_train)
+
+# --- 6. Predicción ---
+y_pred = rf.predict(X_test_pre)
+
+# --- 7. Reporte de métricas ---
+print("\nReporte de clasificación:")
+print(classification_report(y_test, y_pred))
+accuracy = accuracy_score(y_test, y_pred)
+print("Precisión total:", accuracy)
+
+# --- 8. Matriz de confusión ---
+matriz = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+plt.imshow(matriz, cmap='Blues')
+plt.title(f"Matriz de Confusión ")
+plt.xlabel("Predicción")
+plt.ylabel("Etiqueta real")
+plt.colorbar()
+plt.xticks(np.arange(10))
+plt.yticks(np.arange(10))
+for i in range(matriz.shape[0]):
+    for j in range(matriz.shape[1]):
+        plt.text(j, i, matriz[i, j], ha='center', va='center', color="lightblue", fontsize=6)
+plt.show()
+
+# --- 9. Fronteras de decisión en 2D ---
+h = 0.05
+x_min, x_max = X_test_2D[:, 0].min() - 1, X_test_2D[:, 0].max() + 1
+y_min, y_max = X_test_2D[:, 1].min() - 1, X_test_2D[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                     np.arange(y_min, y_max, h))
+
+# Para las fronteras usamos datos proyectados 2D
+Z = rf.predict(pca.inverse_transform(np.c_[xx.ravel(), yy.ravel()]))
+Z = Z.reshape(xx.shape)
+
+plt.figure(figsize=(10, 8))
+plt.contourf(xx, yy, Z, alpha=0.2, cmap=plt.cm.tab10)
+for digit in range(10):
+    plt.scatter(X_test_2D[y_test == digit, 0],
+                X_test_2D[y_test == digit, 1],
+                label=str(digit), s=10, alpha=0.7)
+plt.title("Fronteras de decisión con Random Forest")
+plt.legend()
+plt.show()
