@@ -63,6 +63,6 @@ for digit in range(10):
     plt.scatter(X_test_2D[y_test == digit, 0],
                 X_test_2D[y_test == digit, 1],
                 label=str(digit), s=10, alpha=0.7)
-plt.title("Fronteras de decisión con GaussianNB")
+plt.title("Fronteras de decisión con SVC")
 plt.legend()
 plt.show()
