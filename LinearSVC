@@ -59,4 +59,8 @@ plt.figure(figsize=(10, 8))
 plt.contourf(xx, yy, Z, alpha=0.2, cmap=plt.cm.tab10)
 for digit in range(10):
     plt.scatter(X_test_2D[y_test == digit, 0],
-                X_test_2D[y_tes_]()
+                X_test_2D[y_test == digit, 1],
+                label=str(digit), s=10, alpha=0.7)
+plt.title("Fronteras de decisión con LinearSVC")
+plt.legend()
+plt.show()
